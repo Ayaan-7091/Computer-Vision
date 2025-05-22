@@ -22,7 +22,7 @@ while True:
         area = cv2.contourArea(cnt)
 
         # Filter by area (avoid tiny/noisy contours)
-        if area > 1000:  # Try changing this value and see
+        if area > 10:  # Try changing this value and see
             # Draw the contour
             cv2.drawContours(frame, [cnt], -1, (0, 255, 0), 2)
 
