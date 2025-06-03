@@ -2,16 +2,20 @@ import cv2
 import numpy as np
 
 
-url = 'http://192.168.0.157:8080/video'  # Replace with your IP
+url = 'http://192.168.0.180:8080/video'  # Replace with your IP
 cap = cv2.VideoCapture(url)
 
-
+last_direction = {
+    "Red": None,
+    "Green": None,
+    "Blue": None
+}
 while (True):
     retr, frame = cap.read()
 
     if not retr:
+        print('Unable to process frame !')
         break
-        print*('Unable to process frame !')
 
     frame = cv2.resize(frame,(640,480))
     hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
@@ -43,7 +47,9 @@ while (True):
     def detect_and_display(mask, color_name, color_bgr):
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        for contour in contours:
+        if contours:
+            contours = sorted(contours, key=cv2.contourArea,reverse=True)
+            contour = contours[0] #selecting the largest contour
             area = cv2.contourArea(contour)
             if area > 500:
                 x,y,w,h = cv2.boundingRect(contour)
@@ -54,6 +60,31 @@ while (True):
                 cv2.rectangle(frame, (x,y),(x+w,y+h),color_bgr,2)
                 cv2.circle(frame,(cx,cy),5,(255,255,255),-1)
                 cv2.putText(frame,f"{color_name} {(cx,cy)}",(cx+10,cy),cv2.FONT_HERSHEY_PLAIN,0.5,(255,255,255),1)
+
+                
+                #Navigation logic
+                if cx <= 200:
+                    direction = 'TURN LEFT'
+                elif cx > 440:
+                    direction = 'TURN RIGHT'
+                else:
+                    direction = 'MOVE FORWARD'
+                
+                if direction != last_direction[color_name]:
+                    print(f"[{color_name}] : Direction - {direction}")
+                    last_direction[color_name] = direction
+                
+                cv2.putText(frame, f"Direction: {direction}", (20, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, color_bgr, 2)
+                
+                #setting up directional arrows
+
+            else:
+                print(f"[{color_name}] : Direction - Stop")
+
+
+        else:
+                print(f"[{color_name}] : Direction - Stop")
 
    
     #apply to each color
